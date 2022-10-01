@@ -19,9 +19,7 @@ class ConcatDataset(torchConcatDataset):
     def pull_item(self, idx):
         if idx < 0:
             if -idx > len(self):
-                raise ValueError(
-                    "absolute value of index should not exceed dataset length"
-                )
+                raise ValueError("absolute value of index should not exceed dataset length")
             idx = len(self) + idx
         dataset_idx = bisect.bisect_right(self.cumulative_sizes, idx)
         if dataset_idx == 0:
@@ -44,9 +42,7 @@ class MixConcatDataset(torchConcatDataset):
             idx = index[1]
         if idx < 0:
             if -idx > len(self):
-                raise ValueError(
-                    "absolute value of index should not exceed dataset length"
-                )
+                raise ValueError("absolute value of index should not exceed dataset length")
             idx = len(self) + idx
         dataset_idx = bisect.bisect_right(self.cumulative_sizes, idx)
         if dataset_idx == 0:
@@ -60,7 +56,7 @@ class MixConcatDataset(torchConcatDataset):
 
 
 class Dataset(torchDataset):
-    """ This class is a subclass of the base :class:`torch.utils.data.Dataset`,
+    """This class is a subclass of the base :class:`torch.utils.data.Dataset`,
     that enables on the fly resizing of the ``input_dim``.
 
     Args:

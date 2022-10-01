@@ -164,11 +164,7 @@ class COCODataset(Dataset):
         img_info = (height, width)
         resized_info = (int(height * r), int(width * r))
 
-        file_name = (
-            im_ann["file_name"]
-            if "file_name" in im_ann
-            else "{:012}".format(id_) + ".jpg"
-        )
+        file_name = im_ann["file_name"] if "file_name" in im_ann else "{:012}".format(id_) + ".jpg"
 
         return (res, img_info, resized_info, file_name)
 

@@ -23,9 +23,7 @@ def make_parser():
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
 
     # distributed
-    parser.add_argument(
-        "--dist-backend", default="nccl", type=str, help="distributed backend"
-    )
+    parser.add_argument("--dist-backend", default="nccl", type=str, help="distributed backend")
     parser.add_argument(
         "--dist-url",
         default=None,
@@ -33,12 +31,8 @@ def make_parser():
         help="url used to set up distributed training",
     )
     parser.add_argument("-b", "--batch-size", type=int, default=64, help="batch size")
-    parser.add_argument(
-        "-d", "--devices", default=None, type=int, help="device for training"
-    )
-    parser.add_argument(
-        "--num_machines", default=1, type=int, help="num of node for training"
-    )
+    parser.add_argument("-d", "--devices", default=None, type=int, help="device for training")
+    parser.add_argument("--num_machines", default=1, type=int, help="num of node for training")
     parser.add_argument(
         "--machine_rank", default=0, type=int, help="node rank for multi-node training"
     )
@@ -173,9 +167,7 @@ def main(exp, args, num_gpu):
             not args.fuse and not is_distributed and args.batch_size == 1
         ), "TensorRT model is not support model fusing and distributed inferencing!"
         trt_file = os.path.join(file_name, "model_trt.pth")
-        assert os.path.exists(
-            trt_file
-        ), "TensorRT model is not found!\n Run tools/trt.py first!"
+        assert os.path.exists(trt_file), "TensorRT model is not found!\n Run tools/trt.py first!"
         model.head.decode_in_inference = False
         decoder = model.head.decode_outputs
     else:

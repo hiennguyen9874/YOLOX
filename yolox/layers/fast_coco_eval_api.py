@@ -37,11 +37,7 @@ class COCOeval_opt(COCOeval):
         # add backward compatibility if useSegm is specified in params
         if p.useSegm is not None:
             p.iouType = "segm" if p.useSegm == 1 else "bbox"
-            print(
-                "useSegm (deprecated) is not None. Running {} evaluation".format(
-                    p.iouType
-                )
-            )
+            print("useSegm (deprecated) is not None. Running {} evaluation".format(p.iouType))
         print("Evaluate annotation type *{}*".format(p.iouType))
         p.imgIds = list(np.unique(p.imgIds))
         if p.useCats:
@@ -59,9 +55,7 @@ class COCOeval_opt(COCOeval):
         elif p.iouType == "keypoints":
             computeIoU = self.computeOks
         self.ious = {
-            (imgId, catId): computeIoU(imgId, catId)
-            for imgId in p.imgIds
-            for catId in catIds
+            (imgId, catId): computeIoU(imgId, catId) for imgId in p.imgIds for catId in catIds
         }
 
         maxDet = p.maxDets[-1]
@@ -88,22 +82,15 @@ class COCOeval_opt(COCOeval):
             for imgId in p.imgIds
         ]
         detected_instances = [
-            [
-                convert_instances_to_cpp(self._dts[imgId, catId], is_det=True)
-                for catId in p.catIds
-            ]
+            [convert_instances_to_cpp(self._dts[imgId, catId], is_det=True) for catId in p.catIds]
             for imgId in p.imgIds
         ]
         ious = [[self.ious[imgId, catId] for catId in catIds] for imgId in p.imgIds]
 
         if not p.useCats:
             # For each image, flatten per-category lists into a single list
-            ground_truth_instances = [
-                [[o for c in i for o in c]] for i in ground_truth_instances
-            ]
-            detected_instances = [
-                [[o for c in i for o in c]] for i in detected_instances
-            ]
+            ground_truth_instances = [[[o for c in i for o in c]] for i in ground_truth_instances]
+            detected_instances = [[[o for c in i for o in c]] for i in detected_instances]
 
         # Call C++ implementation of self.evaluateImgs()
         self._evalImgs_cpp = _C.COCOevalEvaluateImages(
@@ -140,11 +127,7 @@ class COCOeval_opt(COCOeval):
 
         # precision and scores are num_iou_thresholds X num_recall_thresholds X num_categories X
         # num_area_ranges X num_max_detections
-        self.eval["precision"] = np.array(self.eval["precision"]).reshape(
-            self.eval["counts"]
-        )
+        self.eval["precision"] = np.array(self.eval["precision"]).reshape(self.eval["counts"])
         self.eval["scores"] = np.array(self.eval["scores"]).reshape(self.eval["counts"])
         toc = time.time()
-        print(
-            "COCOeval_opt.accumulate() finished in {:0.2f} seconds.".format(toc - tic)
-        )
+        print("COCOeval_opt.accumulate() finished in {:0.2f} seconds.".format(toc - tic))

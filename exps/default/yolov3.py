@@ -22,8 +22,10 @@ class Exp(MyExp):
                 if isinstance(m, nn.BatchNorm2d):
                     m.eps = 1e-3
                     m.momentum = 0.03
+
         if "model" not in self.__dict__:
             from yolox.models import YOLOX, YOLOFPN, YOLOXHead
+
             backbone = YOLOFPN()
             head = YOLOXHead(self.num_classes, self.width, in_channels=[128, 256, 512], act="lrelu")
             self.model = YOLOX(backbone, head)

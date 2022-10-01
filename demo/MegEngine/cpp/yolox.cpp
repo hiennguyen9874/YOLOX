@@ -23,7 +23,8 @@ constexpr int INPUT_H = 640;
 
 using namespace mgb;
 
-cv::Mat static_resize(cv::Mat &img) {
+cv::Mat static_resize(cv::Mat &img)
+{
   float r = std::min(INPUT_W / (img.cols * 1.0), INPUT_H / (img.rows * 1.0));
   int unpad_w = r * img.cols;
   int unpad_h = r * img.rows;
@@ -34,13 +35,17 @@ cv::Mat static_resize(cv::Mat &img) {
   return out;
 }
 
-void blobFromImage(cv::Mat &img, float *blob_data) {
+void blobFromImage(cv::Mat &img, float *blob_data)
+{
   int channels = 3;
   int img_h = img.rows;
   int img_w = img.cols;
-  for (size_t c = 0; c < channels; c++) {
-    for (size_t h = 0; h < img_h; h++) {
-      for (size_t w = 0; w < img_w; w++) {
+  for (size_t c = 0; c < channels; c++)
+  {
+    for (size_t h = 0; h < img_h; h++)
+    {
+      for (size_t w = 0; w < img_w; w++)
+      {
         blob_data[c * img_w * img_h + h * img_w + w] =
             (float)img.at<cv::Vec3b>(h, w)[c];
       }
@@ -48,13 +53,15 @@ void blobFromImage(cv::Mat &img, float *blob_data) {
   }
 }
 
-struct Object {
+struct Object
+{
   cv::Rect_<float> rect;
   int label;
   float prob;
 };
 
-struct GridAndStride {
+struct GridAndStride
+{
   int grid0;
   int grid1;
   int stride;
@@ -62,11 +69,15 @@ struct GridAndStride {
 
 static void
 generate_grids_and_stride(const int target_size, std::vector<int> &strides,
-                          std::vector<GridAndStride> &grid_strides) {
-  for (auto stride : strides) {
+                          std::vector<GridAndStride> &grid_strides)
+{
+  for (auto stride : strides)
+  {
     int num_grid = target_size / stride;
-    for (int g1 = 0; g1 < num_grid; g1++) {
-      for (int g0 = 0; g0 < num_grid; g0++) {
+    for (int g1 = 0; g1 < num_grid; g1++)
+    {
+      for (int g0 = 0; g0 < num_grid; g0++)
+      {
         grid_strides.push_back((GridAndStride){g0, g1, stride});
       }
     }
@@ -76,11 +87,13 @@ generate_grids_and_stride(const int target_size, std::vector<int> &strides,
 static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides,
                                      const float *feat_ptr,
                                      float prob_threshold,
-                                     std::vector<Object> &objects) {
+                                     std::vector<Object> &objects)
+{
   const int num_class = 80;
   const int num_anchors = grid_strides.size();
 
-  for (int anchor_idx = 0; anchor_idx < num_anchors; anchor_idx++) {
+  for (int anchor_idx = 0; anchor_idx < num_anchors; anchor_idx++)
+  {
     const int grid0 = grid_strides[anchor_idx].grid0;
     const int grid1 = grid_strides[anchor_idx].grid1;
     const int stride = grid_strides[anchor_idx].stride;
@@ -95,10 +108,12 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides,
     float y0 = y_center - h * 0.5f;
 
     float box_objectness = feat_ptr[basic_pos + 4];
-    for (int class_idx = 0; class_idx < num_class; class_idx++) {
+    for (int class_idx = 0; class_idx < num_class; class_idx++)
+    {
       float box_cls_score = feat_ptr[basic_pos + 5 + class_idx];
       float box_prob = box_objectness * box_cls_score;
-      if (box_prob > prob_threshold) {
+      if (box_prob > prob_threshold)
+      {
         Object obj;
         obj.rect.x = x0;
         obj.rect.y = y0;
@@ -115,25 +130,29 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides,
   } // point anchor loop
 }
 
-static inline float intersection_area(const Object &a, const Object &b) {
+static inline float intersection_area(const Object &a, const Object &b)
+{
   cv::Rect_<float> inter = a.rect & b.rect;
   return inter.area();
 }
 
 static void qsort_descent_inplace(std::vector<Object> &faceobjects, int left,
-                                  int right) {
+                                  int right)
+{
   int i = left;
   int j = right;
   float p = faceobjects[(left + right) / 2].prob;
 
-  while (i <= j) {
+  while (i <= j)
+  {
     while (faceobjects[i].prob > p)
       i++;
 
     while (faceobjects[j].prob < p)
       j--;
 
-    if (i <= j) {
+    if (i <= j)
+    {
       // swap
       std::swap(faceobjects[i], faceobjects[j]);
 
@@ -157,7 +176,8 @@ static void qsort_descent_inplace(std::vector<Object> &faceobjects, int left,
   }
 }
 
-static void qsort_descent_inplace(std::vector<Object> &objects) {
+static void qsort_descent_inplace(std::vector<Object> &objects)
+{
   if (objects.empty())
     return;
 
@@ -165,21 +185,25 @@ static void qsort_descent_inplace(std::vector<Object> &objects) {
 }
 
 static void nms_sorted_bboxes(const std::vector<Object> &faceobjects,
-                              std::vector<int> &picked, float nms_threshold) {
+                              std::vector<int> &picked, float nms_threshold)
+{
   picked.clear();
 
   const int n = faceobjects.size();
 
   std::vector<float> areas(n);
-  for (int i = 0; i < n; i++) {
+  for (int i = 0; i < n; i++)
+  {
     areas[i] = faceobjects[i].rect.area();
   }
 
-  for (int i = 0; i < n; i++) {
+  for (int i = 0; i < n; i++)
+  {
     const Object &a = faceobjects[i];
 
     int keep = 1;
-    for (int j = 0; j < (int)picked.size(); j++) {
+    for (int j = 0; j < (int)picked.size(); j++)
+    {
       const Object &b = faceobjects[picked[j]];
 
       // intersection over union
@@ -196,7 +220,8 @@ static void nms_sorted_bboxes(const std::vector<Object> &faceobjects,
 }
 
 static void decode_outputs(const float *prob, std::vector<Object> &objects,
-                           float scale, const int img_w, const int img_h) {
+                           float scale, const int img_w, const int img_h)
+{
   std::vector<Object> proposals;
   std::vector<int> strides = {8, 16, 32};
   std::vector<GridAndStride> grid_strides;
@@ -210,7 +235,8 @@ static void decode_outputs(const float *prob, std::vector<Object> &objects,
   int count = picked.size();
   objects.resize(count);
 
-  for (int i = 0; i < count; i++) {
+  for (int i = 0; i < count; i++)
+  {
     objects[i] = proposals[picked[i]];
 
     // adjust offset to original unpadded
@@ -233,68 +259,44 @@ static void decode_outputs(const float *prob, std::vector<Object> &objects,
 }
 
 const float color_list[80][3] = {
-    {0.000, 0.447, 0.741}, {0.850, 0.325, 0.098}, {0.929, 0.694, 0.125},
-    {0.494, 0.184, 0.556}, {0.466, 0.674, 0.188}, {0.301, 0.745, 0.933},
-    {0.635, 0.078, 0.184}, {0.300, 0.300, 0.300}, {0.600, 0.600, 0.600},
-    {1.000, 0.000, 0.000}, {1.000, 0.500, 0.000}, {0.749, 0.749, 0.000},
-    {0.000, 1.000, 0.000}, {0.000, 0.000, 1.000}, {0.667, 0.000, 1.000},
-    {0.333, 0.333, 0.000}, {0.333, 0.667, 0.000}, {0.333, 1.000, 0.000},
-    {0.667, 0.333, 0.000}, {0.667, 0.667, 0.000}, {0.667, 1.000, 0.000},
-    {1.000, 0.333, 0.000}, {1.000, 0.667, 0.000}, {1.000, 1.000, 0.000},
-    {0.000, 0.333, 0.500}, {0.000, 0.667, 0.500}, {0.000, 1.000, 0.500},
-    {0.333, 0.000, 0.500}, {0.333, 0.333, 0.500}, {0.333, 0.667, 0.500},
-    {0.333, 1.000, 0.500}, {0.667, 0.000, 0.500}, {0.667, 0.333, 0.500},
-    {0.667, 0.667, 0.500}, {0.667, 1.000, 0.500}, {1.000, 0.000, 0.500},
-    {1.000, 0.333, 0.500}, {1.000, 0.667, 0.500}, {1.000, 1.000, 0.500},
-    {0.000, 0.333, 1.000}, {0.000, 0.667, 1.000}, {0.000, 1.000, 1.000},
-    {0.333, 0.000, 1.000}, {0.333, 0.333, 1.000}, {0.333, 0.667, 1.000},
-    {0.333, 1.000, 1.000}, {0.667, 0.000, 1.000}, {0.667, 0.333, 1.000},
-    {0.667, 0.667, 1.000}, {0.667, 1.000, 1.000}, {1.000, 0.000, 1.000},
-    {1.000, 0.333, 1.000}, {1.000, 0.667, 1.000}, {0.333, 0.000, 0.000},
-    {0.500, 0.000, 0.000}, {0.667, 0.000, 0.000}, {0.833, 0.000, 0.000},
-    {1.000, 0.000, 0.000}, {0.000, 0.167, 0.000}, {0.000, 0.333, 0.000},
-    {0.000, 0.500, 0.000}, {0.000, 0.667, 0.000}, {0.000, 0.833, 0.000},
-    {0.000, 1.000, 0.000}, {0.000, 0.000, 0.167}, {0.000, 0.000, 0.333},
-    {0.000, 0.000, 0.500}, {0.000, 0.000, 0.667}, {0.000, 0.000, 0.833},
-    {0.000, 0.000, 1.000}, {0.000, 0.000, 0.000}, {0.143, 0.143, 0.143},
-    {0.286, 0.286, 0.286}, {0.429, 0.429, 0.429}, {0.571, 0.571, 0.571},
-    {0.714, 0.714, 0.714}, {0.857, 0.857, 0.857}, {0.000, 0.447, 0.741},
-    {0.314, 0.717, 0.741}, {0.50, 0.5, 0}};
+    {0.000, 0.447, 0.741}, {0.850, 0.325, 0.098}, {0.929, 0.694, 0.125}, {0.494, 0.184, 0.556}, {0.466, 0.674, 0.188}, {0.301, 0.745, 0.933}, {0.635, 0.078, 0.184}, {0.300, 0.300, 0.300}, {0.600, 0.600, 0.600}, {1.000, 0.000, 0.000}, {1.000, 0.500, 0.000}, {0.749, 0.749, 0.000}, {0.000, 1.000, 0.000}, {0.000, 0.000, 1.000}, {0.667, 0.000, 1.000}, {0.333, 0.333, 0.000}, {0.333, 0.667, 0.000}, {0.333, 1.000, 0.000}, {0.667, 0.333, 0.000}, {0.667, 0.667, 0.000}, {0.667, 1.000, 0.000}, {1.000, 0.333, 0.000}, {1.000, 0.667, 0.000}, {1.000, 1.000, 0.000}, {0.000, 0.333, 0.500}, {0.000, 0.667, 0.500}, {0.000, 1.000, 0.500}, {0.333, 0.000, 0.500}, {0.333, 0.333, 0.500}, {0.333, 0.667, 0.500}, {0.333, 1.000, 0.500}, {0.667, 0.000, 0.500}, {0.667, 0.333, 0.500}, {0.667, 0.667, 0.500}, {0.667, 1.000, 0.500}, {1.000, 0.000, 0.500}, {1.000, 0.333, 0.500}, {1.000, 0.667, 0.500}, {1.000, 1.000, 0.500}, {0.000, 0.333, 1.000}, {0.000, 0.667, 1.000}, {0.000, 1.000, 1.000}, {0.333, 0.000, 1.000}, {0.333, 0.333, 1.000}, {0.333, 0.667, 1.000}, {0.333, 1.000, 1.000}, {0.667, 0.000, 1.000}, {0.667, 0.333, 1.000}, {0.667, 0.667, 1.000}, {0.667, 1.000, 1.000}, {1.000, 0.000, 1.000}, {1.000, 0.333, 1.000}, {1.000, 0.667, 1.000}, {0.333, 0.000, 0.000}, {0.500, 0.000, 0.000}, {0.667, 0.000, 0.000}, {0.833, 0.000, 0.000}, {1.000, 0.000, 0.000}, {0.000, 0.167, 0.000}, {0.000, 0.333, 0.000}, {0.000, 0.500, 0.000}, {0.000, 0.667, 0.000}, {0.000, 0.833, 0.000}, {0.000, 1.000, 0.000}, {0.000, 0.000, 0.167}, {0.000, 0.000, 0.333}, {0.000, 0.000, 0.500}, {0.000, 0.000, 0.667}, {0.000, 0.000, 0.833}, {0.000, 0.000, 1.000}, {0.000, 0.000, 0.000}, {0.143, 0.143, 0.143}, {0.286, 0.286, 0.286}, {0.429, 0.429, 0.429}, {0.571, 0.571, 0.571}, {0.714, 0.714, 0.714}, {0.857, 0.857, 0.857}, {0.000, 0.447, 0.741}, {0.314, 0.717, 0.741}, {0.50, 0.5, 0}};
 
 static void draw_objects(const cv::Mat &bgr,
-                         const std::vector<Object> &objects) {
+                         const std::vector<Object> &objects)
+{
   static const char *class_names[] = {
-      "person",        "bicycle",      "car",
-      "motorcycle",    "airplane",     "bus",
-      "train",         "truck",        "boat",
+      "person", "bicycle", "car",
+      "motorcycle", "airplane", "bus",
+      "train", "truck", "boat",
       "traffic light", "fire hydrant", "stop sign",
-      "parking meter", "bench",        "bird",
-      "cat",           "dog",          "horse",
-      "sheep",         "cow",          "elephant",
-      "bear",          "zebra",        "giraffe",
-      "backpack",      "umbrella",     "handbag",
-      "tie",           "suitcase",     "frisbee",
-      "skis",          "snowboard",    "sports ball",
-      "kite",          "baseball bat", "baseball glove",
-      "skateboard",    "surfboard",    "tennis racket",
-      "bottle",        "wine glass",   "cup",
-      "fork",          "knife",        "spoon",
-      "bowl",          "banana",       "apple",
-      "sandwich",      "orange",       "broccoli",
-      "carrot",        "hot dog",      "pizza",
-      "donut",         "cake",         "chair",
-      "couch",         "potted plant", "bed",
-      "dining table",  "toilet",       "tv",
-      "laptop",        "mouse",        "remote",
-      "keyboard",      "cell phone",   "microwave",
-      "oven",          "toaster",      "sink",
-      "refrigerator",  "book",         "clock",
-      "vase",          "scissors",     "teddy bear",
-      "hair drier",    "toothbrush"};
+      "parking meter", "bench", "bird",
+      "cat", "dog", "horse",
+      "sheep", "cow", "elephant",
+      "bear", "zebra", "giraffe",
+      "backpack", "umbrella", "handbag",
+      "tie", "suitcase", "frisbee",
+      "skis", "snowboard", "sports ball",
+      "kite", "baseball bat", "baseball glove",
+      "skateboard", "surfboard", "tennis racket",
+      "bottle", "wine glass", "cup",
+      "fork", "knife", "spoon",
+      "bowl", "banana", "apple",
+      "sandwich", "orange", "broccoli",
+      "carrot", "hot dog", "pizza",
+      "donut", "cake", "chair",
+      "couch", "potted plant", "bed",
+      "dining table", "toilet", "tv",
+      "laptop", "mouse", "remote",
+      "keyboard", "cell phone", "microwave",
+      "oven", "toaster", "sink",
+      "refrigerator", "book", "clock",
+      "vase", "scissors", "teddy bear",
+      "hair drier", "toothbrush"};
 
   cv::Mat image = bgr.clone();
 
-  for (size_t i = 0; i < objects.size(); i++) {
+  for (size_t i = 0; i < objects.size(); i++)
+  {
     const Object &obj = objects[i];
 
     fprintf(stderr, "%d = %.5f at %.2f %.2f %.2f x %.2f\n", obj.label, obj.prob,
@@ -305,9 +307,12 @@ static void draw_objects(const cv::Mat &bgr,
                    color_list[obj.label][2]);
     float c_mean = cv::mean(color)[0];
     cv::Scalar txt_color;
-    if (c_mean > 0.5) {
+    if (c_mean > 0.5)
+    {
       txt_color = cv::Scalar(0, 0, 0);
-    } else {
+    }
+    else
+    {
       txt_color = cv::Scalar(255, 255, 255);
     }
 
@@ -345,18 +350,22 @@ static void draw_objects(const cv::Mat &bgr,
 }
 
 cg::ComputingGraph::OutputSpecItem make_callback_copy(SymbolVar dev,
-                                                      HostTensorND &host) {
-  auto cb = [&host](DeviceTensorND &d) { host.copy_from(d); };
+                                                      HostTensorND &host)
+{
+  auto cb = [&host](DeviceTensorND &d)
+  { host.copy_from(d); };
   return {dev, cb};
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
   serialization::GraphLoader::LoadConfig load_config;
   load_config.comp_graph = ComputingGraph::make();
   auto &&graph_opt = load_config.comp_graph->options();
   graph_opt.graph_opt_level = 0;
 
-  if (argc != 9) {
+  if (argc != 9)
+  {
     std::cout << "Usage : " << argv[0]
               << " <path_to_model> <path_to_image> <device> <warmup_count> "
                  "<thread_number> <use_fast_run> <use_weight_preprocess> "
@@ -374,43 +383,61 @@ int main(int argc, char *argv[]) {
   const size_t use_weight_preprocess = atoi(argv[7]);
   const size_t run_with_fp16 = atoi(argv[8]);
 
-  if (device == "cuda") {
-    load_config.comp_node_mapper = [](CompNode::Locator &loc) {
+  if (device == "cuda")
+  {
+    load_config.comp_node_mapper = [](CompNode::Locator &loc)
+    {
       loc.type = CompNode::DeviceType::CUDA;
     };
-  } else if (device == "cpu") {
-    load_config.comp_node_mapper = [](CompNode::Locator &loc) {
+  }
+  else if (device == "cpu")
+  {
+    load_config.comp_node_mapper = [](CompNode::Locator &loc)
+    {
       loc.type = CompNode::DeviceType::CPU;
     };
-  } else if (device == "multithread") {
-    load_config.comp_node_mapper = [thread_number](CompNode::Locator &loc) {
+  }
+  else if (device == "multithread")
+  {
+    load_config.comp_node_mapper = [thread_number](CompNode::Locator &loc)
+    {
       loc.type = CompNode::DeviceType::MULTITHREAD;
       loc.device = 0;
       loc.stream = thread_number;
     };
     std::cout << "use " << thread_number << " thread" << std::endl;
-  } else {
+  }
+  else
+  {
     std::cout << "device only support cuda or cpu or multithread" << std::endl;
     return EXIT_FAILURE;
   }
 
-  if (use_weight_preprocess) {
+  if (use_weight_preprocess)
+  {
     std::cout << "use weight preprocess" << std::endl;
     graph_opt.graph_opt.enable_weight_preprocess();
   }
-  if (run_with_fp16) {
+  if (run_with_fp16)
+  {
     std::cout << "run with fp16" << std::endl;
     graph_opt.graph_opt.enable_f16_io_comp();
   }
 
-  if (device == "cuda") {
+  if (device == "cuda")
+  {
     std::cout << "choose format for cuda" << std::endl;
-  } else {
+  }
+  else
+  {
     std::cout << "choose format for non-cuda" << std::endl;
 #if defined(__arm__) || defined(__aarch64__)
-    if (run_with_fp16) {
+    if (run_with_fp16)
+    {
       std::cout << "use chw format when enable fp16" << std::endl;
-    } else {
+    }
+    else
+    {
       std::cout << "choose format for nchw44 for aarch64" << std::endl;
       graph_opt.graph_opt.enable_nchw44();
     }
@@ -426,7 +453,8 @@ int main(int argc, char *argv[]) {
   serialization::GraphLoader::LoadResult network =
       loader->load(load_config, false);
 
-  if (use_fast_run) {
+  if (use_fast_run)
+  {
     std::cout << "use fastrun" << std::endl;
     using S = opr::mixin::AlgoChooserHelper::ExecutionPolicy::Strategy;
     S strategy = static_cast<S>(0);
@@ -444,7 +472,8 @@ int main(int argc, char *argv[]) {
   std::unique_ptr<cg::AsyncExecutable> func = network.graph->compile(
       {make_callback_copy(network.output_var_map.begin()->second, predict)});
 
-  for (auto i = 0; i < warmup_count; i++) {
+  for (auto i = 0; i < warmup_count; i++)
+  {
     std::cout << "warmup: " << i << std::endl;
     func->execute();
     func->wait();

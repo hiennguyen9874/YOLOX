@@ -91,9 +91,7 @@ class VOCEvaluator:
             model(x)
             model = model_trt
 
-        for cur_iter, (imgs, _, info_imgs, ids) in enumerate(
-            progress_bar(self.dataloader)
-        ):
+        for cur_iter, (imgs, _, info_imgs, ids) in enumerate(progress_bar(self.dataloader)):
             with torch.no_grad():
                 imgs = imgs.type(tensor_type)
 
@@ -110,9 +108,7 @@ class VOCEvaluator:
                     infer_end = time_synchronized()
                     inference_time += infer_end - start
 
-                outputs = postprocess(
-                    outputs, self.num_classes, self.confthre, self.nmsthre
-                )
+                outputs = postprocess(outputs, self.num_classes, self.confthre, self.nmsthre)
                 if is_time_record:
                     nms_end = time_synchronized()
                     nms_time += nms_end - infer_end
@@ -131,9 +127,7 @@ class VOCEvaluator:
 
     def convert_to_voc_format(self, outputs, info_imgs, ids):
         predictions = {}
-        for (output, img_h, img_w, img_id) in zip(
-            outputs, info_imgs[0], info_imgs[1], ids
-        ):
+        for (output, img_h, img_w, img_id) in zip(outputs, info_imgs[0], info_imgs[1], ids):
             if output is None:
                 predictions[int(img_id)] = (None, None, None)
                 continue
@@ -142,9 +136,7 @@ class VOCEvaluator:
             bboxes = output[:, 0:4]
 
             # preprocessing: resize
-            scale = min(
-                self.img_size[0] / float(img_h), self.img_size[1] / float(img_w)
-            )
+            scale = min(self.img_size[0] / float(img_h), self.img_size[1] / float(img_w))
             bboxes /= scale
 
             cls = output[:, 6]
@@ -178,9 +170,7 @@ class VOCEvaluator:
 
         info = time_info + "\n"
 
-        all_boxes = [
-            [[] for _ in range(self.num_images)] for _ in range(self.num_classes)
-        ]
+        all_boxes = [[[] for _ in range(self.num_images)] for _ in range(self.num_classes)]
         for img_num in range(self.num_images):
             bboxes, cls, scores = data_dict[img_num]
             if bboxes is None:
@@ -196,13 +186,9 @@ class VOCEvaluator:
                 c_dets = torch.cat((bboxes, scores.unsqueeze(1)), dim=1)
                 all_boxes[j][img_num] = c_dets[mask_c].numpy()
 
-            sys.stdout.write(
-                "im_eval: {:d}/{:d} \r".format(img_num + 1, self.num_images)
-            )
+            sys.stdout.write("im_eval: {:d}/{:d} \r".format(img_num + 1, self.num_images))
             sys.stdout.flush()
 
         with tempfile.TemporaryDirectory() as tempdir:
-            mAP50, mAP70 = self.dataloader.dataset.evaluate_detections(
-                all_boxes, tempdir
-            )
+            mAP50, mAP70 = self.dataloader.dataset.evaluate_detections(all_boxes, tempdir)
             return mAP50, mAP70, info

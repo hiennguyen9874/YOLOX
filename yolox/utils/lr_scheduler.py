@@ -103,17 +103,11 @@ def cos_lr(lr, total_iters, iters):
 def warm_cos_lr(lr, total_iters, warmup_total_iters, warmup_lr_start, iters):
     """Cosine learning rate with warm up."""
     if iters <= warmup_total_iters:
-        lr = (lr - warmup_lr_start) * iters / float(
-            warmup_total_iters
-        ) + warmup_lr_start
+        lr = (lr - warmup_lr_start) * iters / float(warmup_total_iters) + warmup_lr_start
     else:
         lr *= 0.5 * (
             1.0
-            + math.cos(
-                math.pi
-                * (iters - warmup_total_iters)
-                / (total_iters - warmup_total_iters)
-            )
+            + math.cos(math.pi * (iters - warmup_total_iters) / (total_iters - warmup_total_iters))
         )
     return lr
 
@@ -131,9 +125,7 @@ def yolox_warm_cos_lr(
     min_lr = lr * min_lr_ratio
     if iters <= warmup_total_iters:
         # lr = (lr - warmup_lr_start) * iters / float(warmup_total_iters) + warmup_lr_start
-        lr = (lr - warmup_lr_start) * pow(
-            iters / float(warmup_total_iters), 2
-        ) + warmup_lr_start
+        lr = (lr - warmup_lr_start) * pow(iters / float(warmup_total_iters), 2) + warmup_lr_start
     elif iters >= total_iters - no_aug_iter:
         lr = min_lr
     else:
@@ -165,9 +157,7 @@ def yolox_semi_warm_cos_lr(
     min_lr = lr * min_lr_ratio
     if iters <= warmup_total_iters:
         # lr = (lr - warmup_lr_start) * iters / float(warmup_total_iters) + warmup_lr_start
-        lr = (lr - warmup_lr_start) * pow(
-            iters / float(warmup_total_iters), 2
-        ) + warmup_lr_start
+        lr = (lr - warmup_lr_start) * pow(iters / float(warmup_total_iters), 2) + warmup_lr_start
     elif iters >= normal_iters + semi_iters:
         lr = min_lr
     elif iters <= normal_iters:
@@ -187,10 +177,7 @@ def yolox_semi_warm_cos_lr(
                 * (
                     normal_iters
                     - warmup_total_iters
-                    + (iters - normal_iters)
-                    * iters_per_epoch
-                    * 1.0
-                    / iters_per_epoch_semi
+                    + (iters - normal_iters) * iters_per_epoch * 1.0 / iters_per_epoch_semi
                 )
                 / (total_iters - warmup_total_iters - no_aug_iters)
             )

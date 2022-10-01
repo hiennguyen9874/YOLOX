@@ -29,14 +29,15 @@ class Exp(MyExp):
         self.num_classes = 71
 
     def get_model(self, sublinear=False):
-
         def init_yolo(M):
             for m in M.modules():
                 if isinstance(m, nn.BatchNorm2d):
                     m.eps = 1e-3
                     m.momentum = 0.03
+
         if "model" not in self.__dict__:
             from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
+
             in_channels = [256, 512, 1024]
             # NANO model use depthwise = True, which is main difference.
             backbone = YOLOPAFPN(self.depth, self.width, in_channels=in_channels, depthwise=True)

@@ -23,7 +23,7 @@ from yolox.utils import (
     postprocess,
     synchronize,
     time_synchronized,
-    xyxy2xywh
+    xyxy2xywh,
 )
 
 
@@ -45,7 +45,11 @@ def per_class_AR_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "A
     row_pair = itertools.zip_longest(*[result_pair[i::num_cols] for i in range(num_cols)])
     table_headers = headers * (num_cols // len(headers))
     table = tabulate(
-        row_pair, tablefmt="pipe", floatfmt=".3f", headers=table_headers, numalign="left",
+        row_pair,
+        tablefmt="pipe",
+        floatfmt=".3f",
+        headers=table_headers,
+        numalign="left",
     )
     return table
 
@@ -70,7 +74,11 @@ def per_class_AP_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "A
     row_pair = itertools.zip_longest(*[result_pair[i::num_cols] for i in range(num_cols)])
     table_headers = headers * (num_cols // len(headers))
     table = tabulate(
-        row_pair, tablefmt="pipe", floatfmt=".3f", headers=table_headers, numalign="left",
+        row_pair,
+        tablefmt="pipe",
+        floatfmt=".3f",
+        headers=table_headers,
+        numalign="left",
     )
     return table
 
@@ -158,9 +166,7 @@ class COCOEvaluator:
             model(x)
             model = model_trt
 
-        for cur_iter, (imgs, _, info_imgs, ids) in enumerate(
-            progress_bar(self.dataloader)
-        ):
+        for cur_iter, (imgs, _, info_imgs, ids) in enumerate(progress_bar(self.dataloader)):
             with torch.no_grad():
                 imgs = imgs.type(tensor_type)
 
@@ -177,9 +183,7 @@ class COCOEvaluator:
                     infer_end = time_synchronized()
                     inference_time += infer_end - start
 
-                outputs = postprocess(
-                    outputs, self.num_classes, self.confthre, self.nmsthre
-                )
+                outputs = postprocess(outputs, self.num_classes, self.confthre, self.nmsthre)
                 if is_time_record:
                     nms_end = time_synchronized()
                     nms_time += nms_end - infer_end
@@ -198,9 +202,7 @@ class COCOEvaluator:
 
     def convert_to_coco_format(self, outputs, info_imgs, ids):
         data_list = []
-        for (output, img_h, img_w, img_id) in zip(
-            outputs, info_imgs[0], info_imgs[1], ids
-        ):
+        for (output, img_h, img_w, img_id) in zip(outputs, info_imgs[0], info_imgs[1], ids):
             if output is None:
                 continue
             output = output.cpu()
@@ -208,9 +210,7 @@ class COCOEvaluator:
             bboxes = output[:, 0:4]
 
             # preprocessing: resize
-            scale = min(
-                self.img_size[0] / float(img_h), self.img_size[1] / float(img_w)
-            )
+            scale = min(self.img_size[0] / float(img_h), self.img_size[1] / float(img_w))
             bboxes /= scale
             bboxes = xyxy2xywh(bboxes)
 
@@ -281,7 +281,7 @@ class COCOEvaluator:
                 cocoEval.summarize()
             info += redirect_string.getvalue()
             cat_ids = list(cocoGt.cats.keys())
-            cat_names = [cocoGt.cats[catId]['name'] for catId in sorted(cat_ids)]
+            cat_names = [cocoGt.cats[catId]["name"] for catId in sorted(cat_ids)]
             if self.per_class_AP:
                 AP_table = per_class_AP_table(cocoEval, class_names=cat_names)
                 info += "per class AP:\n" + AP_table + "\n"

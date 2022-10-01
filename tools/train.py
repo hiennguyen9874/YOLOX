@@ -21,9 +21,7 @@ def make_parser():
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
 
     # distributed
-    parser.add_argument(
-        "--dist-backend", default="nccl", type=str, help="distributed backend"
-    )
+    parser.add_argument("--dist-backend", default="nccl", type=str, help="distributed backend")
     parser.add_argument(
         "--dist-url",
         default=None,
@@ -31,9 +29,7 @@ def make_parser():
         help="url used to set up distributed training",
     )
     parser.add_argument("-b", "--batch-size", type=int, default=64, help="batch size")
-    parser.add_argument(
-        "-d", "--devices", default=None, type=int, help="device for training"
-    )
+    parser.add_argument("-d", "--devices", default=None, type=int, help="device for training")
     parser.add_argument(
         "-f",
         "--exp_file",
@@ -41,9 +37,7 @@ def make_parser():
         type=str,
         help="plz input your experiment description file",
     )
-    parser.add_argument(
-        "--resume", default=False, action="store_true", help="resume training"
-    )
+    parser.add_argument("--resume", default=False, action="store_true", help="resume training")
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="checkpoint file")
     parser.add_argument(
         "-e",
@@ -52,9 +46,7 @@ def make_parser():
         type=int,
         help="resume training start epoch",
     )
-    parser.add_argument(
-        "--num_machines", default=1, type=int, help="num of node for training"
-    )
+    parser.add_argument("--num_machines", default=1, type=int, help="num of node for training")
     parser.add_argument(
         "--machine_rank", default=0, type=int, help="node rank for multi-node training"
     )
@@ -81,11 +73,7 @@ def make_parser():
         help="occupy GPU memory first for training.",
     )
     parser.add_argument(
-        "-l",
-        "--logger",
-        type=str,
-        help="Logger to be used for metrics",
-        default="tensorboard"
+        "-l", "--logger", type=str, help="Logger to be used for metrics", default="tensorboard"
     )
     parser.add_argument(
         "opts",

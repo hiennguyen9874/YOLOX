@@ -27,7 +27,7 @@ from yolox.utils import (
     occupy_mem,
     save_checkpoint,
     setup_logger,
-    synchronize
+    synchronize,
 )
 
 
@@ -131,9 +131,7 @@ class Trainer:
         # model related init
         torch.cuda.set_device(self.local_rank)
         model = self.exp.get_model()
-        logger.info(
-            "Model Summary: {}".format(get_model_info(model, self.exp.test_size))
-        )
+        logger.info("Model Summary: {}".format(get_model_info(model, self.exp.test_size)))
         model.to(self.device)
 
         # solver related init
@@ -240,14 +238,10 @@ class Trainer:
                 self.epoch + 1, self.max_epoch, self.iter + 1, self.max_iter
             )
             loss_meter = self.meter.get_filtered_meter("loss")
-            loss_str = ", ".join(
-                ["{}: {:.1f}".format(k, v.latest) for k, v in loss_meter.items()]
-            )
+            loss_str = ", ".join(["{}: {:.1f}".format(k, v.latest) for k, v in loss_meter.items()])
 
             time_meter = self.meter.get_filtered_meter("time")
-            time_str = ", ".join(
-                ["{}: {:.3f}s".format(k, v.avg) for k, v in time_meter.items()]
-            )
+            time_str = ", ".join(["{}: {:.3f}s".format(k, v.avg) for k, v in time_meter.items()])
 
             logger.info(
                 "{}, mem: {:.0f}Mb, {}, {}, lr: {:.3e}".format(
@@ -298,9 +292,7 @@ class Trainer:
             )
             self.start_epoch = start_epoch
             logger.info(
-                "loaded checkpoint '{}' (epoch {})".format(
-                    self.args.resume, self.start_epoch
-                )
+                "loaded checkpoint '{}' (epoch {})".format(self.args.resume, self.start_epoch)
             )  # noqa
         else:
             if self.args.ckpt is not None:
@@ -320,9 +312,7 @@ class Trainer:
             if is_parallel(evalmodel):
                 evalmodel = evalmodel.module
 
-        ap50_95, ap50, summary = self.exp.eval(
-            evalmodel, self.evaluator, self.is_distributed
-        )
+        ap50_95, ap50, summary = self.exp.eval(evalmodel, self.evaluator, self.is_distributed)
         update_best_ckpt = ap50_95 > self.best_ap
         self.best_ap = max(self.best_ap, ap50_95)
 
@@ -332,11 +322,13 @@ class Trainer:
                 self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
                 self.tblogger.add_scalar("val/COCOAP50_95", ap50_95, self.epoch + 1)
             if self.args.logger == "wandb":
-                self.wandb_logger.log_metrics({
-                    "val/COCOAP50": ap50,
-                    "val/COCOAP50_95": ap50_95,
-                    "epoch": self.epoch + 1,
-                })
+                self.wandb_logger.log_metrics(
+                    {
+                        "val/COCOAP50": ap50,
+                        "val/COCOAP50_95": ap50_95,
+                        "epoch": self.epoch + 1,
+                    }
+                )
             logger.info("\n" + summary)
         synchronize()
 

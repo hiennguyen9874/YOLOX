@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include <vector>
 
-#define YOLOX_NMS_THRESH  0.45 // nms threshold
+#define YOLOX_NMS_THRESH 0.45  // nms threshold
 #define YOLOX_CONF_THRESH 0.25 // threshold of bounding box prob
 #define YOLOX_TARGET_SIZE 640  // target image size after resize, might use 416 for small model
 
@@ -40,7 +40,7 @@ public:
         one_blob_only = true;
     }
 
-    virtual int forward(const ncnn::Mat& bottom_blob, ncnn::Mat& top_blob, const ncnn::Option& opt) const
+    virtual int forward(const ncnn::Mat &bottom_blob, ncnn::Mat &top_blob, const ncnn::Option &opt) const
     {
         int w = bottom_blob.w;
         int h = bottom_blob.h;
@@ -54,11 +54,11 @@ public:
         if (top_blob.empty())
             return -100;
 
-        #pragma omp parallel for num_threads(opt.num_threads)
+#pragma omp parallel for num_threads(opt.num_threads)
         for (int p = 0; p < outc; p++)
         {
-            const float* ptr = bottom_blob.channel(p % channels).row((p / channels) % 2) + ((p / channels) / 2);
-            float* outptr = top_blob.channel(p);
+            const float *ptr = bottom_blob.channel(p % channels).row((p / channels) % 2) + ((p / channels) / 2);
+            float *outptr = top_blob.channel(p);
 
             for (int i = 0; i < outh; i++)
             {
@@ -94,13 +94,13 @@ struct GridAndStride
     int stride;
 };
 
-static inline float intersection_area(const Object& a, const Object& b)
+static inline float intersection_area(const Object &a, const Object &b)
 {
     cv::Rect_<float> inter = a.rect & b.rect;
     return inter.area();
 }
 
-static void qsort_descent_inplace(std::vector<Object>& faceobjects, int left, int right)
+static void qsort_descent_inplace(std::vector<Object> &faceobjects, int left, int right)
 {
     int i = left;
     int j = right;
@@ -124,20 +124,22 @@ static void qsort_descent_inplace(std::vector<Object>& faceobjects, int left, in
         }
     }
 
-    #pragma omp parallel sections
+#pragma omp parallel sections
     {
-        #pragma omp section
+#pragma omp section
         {
-            if (left < j) qsort_descent_inplace(faceobjects, left, j);
+            if (left < j)
+                qsort_descent_inplace(faceobjects, left, j);
         }
-        #pragma omp section
+#pragma omp section
         {
-            if (i < right) qsort_descent_inplace(faceobjects, i, right);
+            if (i < right)
+                qsort_descent_inplace(faceobjects, i, right);
         }
     }
 }
 
-static void qsort_descent_inplace(std::vector<Object>& objects)
+static void qsort_descent_inplace(std::vector<Object> &objects)
 {
     if (objects.empty())
         return;
@@ -145,7 +147,7 @@ static void qsort_descent_inplace(std::vector<Object>& objects)
     qsort_descent_inplace(objects, 0, objects.size() - 1);
 }
 
-static void nms_sorted_bboxes(const std::vector<Object>& faceobjects, std::vector<int>& picked, float nms_threshold)
+static void nms_sorted_bboxes(const std::vector<Object> &faceobjects, std::vector<int> &picked, float nms_threshold)
 {
     picked.clear();
 
@@ -159,12 +161,12 @@ static void nms_sorted_bboxes(const std::vector<Object>& faceobjects, std::vecto
 
     for (int i = 0; i < n; i++)
     {
-        const Object& a = faceobjects[i];
+        const Object &a = faceobjects[i];
 
         int keep = 1;
         for (int j = 0; j < (int)picked.size(); j++)
         {
-            const Object& b = faceobjects[picked[j]];
+            const Object &b = faceobjects[picked[j]];
 
             // intersection over union
             float inter_area = intersection_area(a, b);
@@ -179,7 +181,7 @@ static void nms_sorted_bboxes(const std::vector<Object>& faceobjects, std::vecto
     }
 }
 
-static void generate_grids_and_stride(const int target_size, std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
+static void generate_grids_and_stride(const int target_size, std::vector<int> &strides, std::vector<GridAndStride> &grid_strides)
 {
     for (int i = 0; i < (int)strides.size(); i++)
     {
@@ -199,13 +201,13 @@ static void generate_grids_and_stride(const int target_size, std::vector<int>& s
     }
 }
 
-static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, const ncnn::Mat& feat_blob, float prob_threshold, std::vector<Object>& objects)
+static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, const ncnn::Mat &feat_blob, float prob_threshold, std::vector<Object> &objects)
 {
     const int num_grid = feat_blob.h;
     const int num_class = feat_blob.w - 5;
     const int num_anchors = grid_strides.size();
 
-    const float* feat_ptr = feat_blob.channel(0);
+    const float *feat_ptr = feat_blob.channel(0);
     for (int anchor_idx = 0; anchor_idx < num_anchors; anchor_idx++)
     {
         const int grid0 = grid_strides[anchor_idx].grid0;
@@ -246,7 +248,7 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, co
     } // point anchor loop
 }
 
-static int detect_yolox(const cv::Mat& bgr, std::vector<Object>& objects)
+static int detect_yolox(const cv::Mat &bgr, std::vector<Object> &objects)
 {
     ncnn::Net yolox;
 
@@ -341,9 +343,9 @@ static int detect_yolox(const cv::Mat& bgr, std::vector<Object>& objects)
     return 0;
 }
 
-static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
+static void draw_objects(const cv::Mat &bgr, const std::vector<Object> &objects)
 {
-    static const char* class_names[] = {
+    static const char *class_names[] = {
         "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light",
         "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow",
         "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee",
@@ -352,14 +354,13 @@ static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
         "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch",
         "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone",
         "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear",
-        "hair drier", "toothbrush"
-    };
+        "hair drier", "toothbrush"};
 
     cv::Mat image = bgr.clone();
 
     for (size_t i = 0; i < objects.size(); i++)
     {
-        const Object& obj = objects[i];
+        const Object &obj = objects[i];
 
         fprintf(stderr, "%d = %.5f at %.2f %.2f %.2f x %.2f\n", obj.label, obj.prob,
                 obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height);
@@ -390,7 +391,7 @@ static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
     cv::waitKey(0);
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     if (argc != 2)
     {
@@ -398,7 +399,7 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    const char* imagepath = argv[1];
+    const char *imagepath = argv[1];
 
     cv::Mat m = cv::imread(imagepath, 1);
     if (m.empty())

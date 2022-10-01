@@ -55,8 +55,7 @@ def get_install_requirements():
 def get_yolox_version():
     with open("yolox/__init__.py", "r") as f:
         version = re.search(
-            r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
-            f.read(), re.MULTILINE
+            r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE
         ).group(1)
     return version
 
@@ -79,7 +78,8 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     ext_modules=get_extensions(),
     classifiers=[
-        "Programming Language :: Python :: 3", "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
+        "Operating System :: OS Independent",
         "License :: OSI Approved :: Apache Software License",
     ],
     cmdclass={"build_ext": torch.utils.cpp_extension.BuildExtension},

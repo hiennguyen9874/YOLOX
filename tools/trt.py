@@ -28,9 +28,9 @@ def make_parser():
     )
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt path")
     parser.add_argument(
-        "-w", '--workspace', type=int, default=32, help='max workspace size in detect'
+        "-w", "--workspace", type=int, default=32, help="max workspace size in detect"
     )
-    parser.add_argument("-b", '--batch', type=int, default=1, help='max batch size in detect')
+    parser.add_argument("-b", "--batch", type=int, default=1, help="max batch size in detect")
     return parser
 
 

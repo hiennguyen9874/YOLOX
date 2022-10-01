@@ -152,7 +152,6 @@ def preproc(img, input_size, swap=(2, 0, 1)):
         interpolation=cv2.INTER_LINEAR,
     ).astype(np.uint8)
     padded_img[: int(img.shape[0] * r), : int(img.shape[1] * r)] = resized_img
-
     padded_img = padded_img.transpose(swap)
     padded_img = np.ascontiguousarray(padded_img, dtype=np.float32)
     return padded_img, r

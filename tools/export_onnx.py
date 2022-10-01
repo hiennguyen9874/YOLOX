@@ -5,6 +5,7 @@
 import argparse
 import os
 import sys
+import random
 
 from loguru import logger
 
@@ -424,7 +425,8 @@ def main():
         ckpt = ckpt["model"]
     model.load_state_dict(ckpt)
     model = replace_module(model, nn.SiLU, SiLU)
-    model.head.decode_in_inference = True
+    # model.head.decode_in_inference = False
+    model.head.end2end_in_inference = True
 
     logger.info("loading checkpoint done.")
     dummy_input = torch.randn(args.batch_size, 3, exp.test_size[0], exp.test_size[1])
@@ -468,7 +470,7 @@ def main():
             iou_thres=args.iou_thres,
             score_thres=args.conf_thres,
             max_wh=max(dummy_input.shape[2:]),
-            device=torch.device("cpu") if args.dynamic_batch else device,
+            device=torch.device("cpu"),
             n_classes=model.head.num_classes,
             type_nms=args.type_nms,
             trt=args.trt,

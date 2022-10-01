@@ -217,6 +217,7 @@ class YOLOXHead(nn.Module):
             batch_size, self.n_anchors * hsize * wsize, -1
         )
         grid = grid.view(1, -1, 2)
+
         output[..., :2] = (output[..., :2] + grid) * stride
         output[..., 2:4] = torch.exp(output[..., 2:4]) * stride
         return output, grid
@@ -234,8 +235,18 @@ class YOLOXHead(nn.Module):
         grids = torch.cat(grids, dim=1).type(dtype)
         strides = torch.cat(strides, dim=1).type(dtype)
 
-        outputs[..., :2] = (outputs[..., :2] + grids) * strides
-        outputs[..., 2:4] = torch.exp(outputs[..., 2:4]) * strides
+        if torch.onnx.is_in_onnx_export():
+            outputs = torch.cat(
+                (
+                    (outputs[..., :2] + grids) * strides,
+                    torch.exp(outputs[..., 2:4]) * strides,
+                    outputs[..., 4:],
+                ),
+                dim=2,
+            )
+        else:
+            outputs[..., :2] = (outputs[..., :2] + grids) * strides
+            outputs[..., 2:4] = torch.exp(outputs[..., 2:4]) * strides
         return outputs
 
     def get_losses(

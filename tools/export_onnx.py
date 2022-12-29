@@ -19,15 +19,11 @@ def make_parser():
     parser.add_argument(
         "--output-name", type=str, default="yolox.onnx", help="output name of models"
     )
-    parser.add_argument(
-        "--input", default="images", type=str, help="input node name of onnx model"
-    )
+    parser.add_argument("--input", default="images", type=str, help="input node name of onnx model")
     parser.add_argument(
         "--output", default="output", type=str, help="output node name of onnx model"
     )
-    parser.add_argument(
-        "-o", "--opset", default=11, type=int, help="onnx opset version"
-    )
+    parser.add_argument("-o", "--opset", default=11, type=int, help="onnx opset version")
     parser.add_argument("--batch-size", type=int, default=1, help="batch size")
     parser.add_argument(
         "--dynamic", action="store_true", help="whether the input shape should be dynamic or not"
@@ -50,9 +46,7 @@ def make_parser():
         nargs=argparse.REMAINDER,
     )
     parser.add_argument(
-        "--decode_in_inference",
-        action="store_true",
-        help="decode in inference or not"
+        "--decode_in_inference", action="store_true", help="decode in inference or not"
     )
 
     return parser
@@ -94,8 +88,9 @@ def main():
         args.output_name,
         input_names=[args.input],
         output_names=[args.output],
-        dynamic_axes={args.input: {0: 'batch'},
-                      args.output: {0: 'batch'}} if args.dynamic else None,
+        dynamic_axes={args.input: {0: "batch"}, args.output: {0: "batch"}}
+        if args.dynamic
+        else None,
         opset_version=args.opset,
     )
     logger.info("generated onnx model named {}".format(args.output_name))

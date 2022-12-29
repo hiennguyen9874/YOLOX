@@ -5,4 +5,4 @@ YOLOX is included in ncnn now, you could also try building from ncnn, it's bette
 
 ## Acknowledgement
 
-* [ncnn](https://github.com/Tencent/ncnn)
+- [ncnn](https://github.com/Tencent/ncnn)

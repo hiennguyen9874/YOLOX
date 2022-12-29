@@ -100,13 +100,12 @@ class COCODataset(Dataset):
             )
 
         if self.imgs is None:
-            if self.cache_type == 'ram':
+            if self.cache_type == "ram":
                 self.imgs = [None] * self.num_imgs
                 logger.info("You are using cached images in RAM to accelerate training!")
-            else:   # 'disk'
+            else:  # 'disk'
                 self.cache_dir = os.path.join(
-                    self.data_dir,
-                    f"{self.name}_cache{self.img_size[0]}x{self.img_size[1]}"
+                    self.data_dir, f"{self.name}_cache{self.img_size[0]}x{self.img_size[1]}"
                 )
                 if not os.path.exists(self.cache_dir):
                     os.mkdir(self.cache_dir)
@@ -123,22 +122,21 @@ class COCODataset(Dataset):
                     return
 
             logger.info(
-                "Caching images for the first time. "
-                "This might take about 15 minutes for COCO"
+                "Caching images for the first time. " "This might take about 15 minutes for COCO"
             )
 
             num_threads = min(8, max(1, os.cpu_count() - 1))
             b = 0
             load_imgs = ThreadPool(num_threads).imap(self.load_resized_img, range(self.num_imgs))
             pbar = tqdm(enumerate(load_imgs), total=self.num_imgs)
-            for i, x in pbar:   # x = self.load_resized_img(self, i)
-                if self.cache_type == 'ram':
+            for i, x in pbar:  # x = self.load_resized_img(self, i)
+                if self.cache_type == "ram":
                     self.imgs[i] = x
-                else:   # 'disk'
+                else:  # 'disk'
                     cache_filename = f'{self.annotations[i]["filename"].split(".")[0]}.npy'
                     np.save(os.path.join(self.cache_dir, cache_filename), x)
                 b += x.nbytes
-                pbar.desc = f'Caching images ({b / gb:.1f}/{mem_required / gb:.1f}GB {self.cache})'
+                pbar.desc = f"Caching images ({b / gb:.1f}/{mem_required / gb:.1f}GB {self.cache})"
             pbar.close()
 
     def cal_cache_ram(self):
@@ -189,11 +187,7 @@ class COCODataset(Dataset):
         img_info = (height, width)
         resized_info = (int(height * r), int(width * r))
 
-        file_name = (
-            im_ann["file_name"]
-            if "file_name" in im_ann
-            else "{:012}".format(id_) + ".jpg"
-        )
+        file_name = im_ann["file_name"] if "file_name" in im_ann else "{:012}".format(id_) + ".jpg"
 
         return (res, img_info, resized_info, file_name)
 
@@ -224,9 +218,9 @@ class COCODataset(Dataset):
         id_ = self.ids[index]
         label, origin_image_size, _, filename = self.annotations[index]
 
-        if self.cache and self.cache_type == 'ram':
+        if self.cache and self.cache_type == "ram":
             img = self.imgs[index]
-        elif self.cache and self.cache_type == 'disk':
+        elif self.cache and self.cache_type == "disk":
             img = np.load(os.path.join(self.cache_dir, f"{filename.split('.')[0]}.npy"))
         else:
             img = self.load_resized_img(index)

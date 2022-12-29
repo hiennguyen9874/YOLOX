@@ -13,12 +13,8 @@ namespace COCOeval {
 
 // Annotation data for a single object instance in an image
 struct InstanceAnnotation {
-  InstanceAnnotation(
-      uint64_t id,
-      double score,
-      double area,
-      bool is_crowd,
-      bool ignore)
+  InstanceAnnotation(uint64_t id, double score, double area, bool is_crowd,
+                     bool ignore)
       : id{id}, score{score}, area{area}, is_crowd{is_crowd}, ignore{ignore} {}
   uint64_t id;
   double score = 0.;
@@ -64,35 +60,30 @@ using ImageCategoryInstances = std::vector<std::vector<std::vector<T>>>;
 //   image_category_detection_instances[i][c] is a vector of detected
 //     instances in image image_ids[i] of category category_ids[c]
 std::vector<ImageEvaluation> EvaluateImages(
-    const std::vector<std::array<double, 2>>& area_ranges, // vector of 2-tuples
-    int max_detections,
-    const std::vector<double>& iou_thresholds,
-    const ImageCategoryInstances<std::vector<double>>& image_category_ious,
-    const ImageCategoryInstances<InstanceAnnotation>&
-        image_category_ground_truth_instances,
-    const ImageCategoryInstances<InstanceAnnotation>&
-        image_category_detection_instances);
+    const std::vector<std::array<double, 2>> &area_ranges, // vector of 2-tuples
+    int max_detections, const std::vector<double> &iou_thresholds,
+    const ImageCategoryInstances<std::vector<double>> &image_category_ious,
+    const ImageCategoryInstances<InstanceAnnotation>
+        &image_category_ground_truth_instances,
+    const ImageCategoryInstances<InstanceAnnotation>
+        &image_category_detection_instances);
 
 // C++ implementation of COCOeval.accumulate(), which generates precision
 // recall curves for each set of category, IOU threshold, detection area range,
 // and max number of detections parameters.  It is assumed that the parameter
 // evaluations is the return value of the functon COCOeval::EvaluateImages(),
 // which was called with the same parameter settings params
-py::dict Accumulate(
-    const py::object& params,
-    const std::vector<ImageEvaluation>& evalutations);
+py::dict Accumulate(const py::object &params,
+                    const std::vector<ImageEvaluation> &evalutations);
 
 } // namespace COCOeval
 
-PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)
-{
-    m.def("COCOevalAccumulate", &COCOeval::Accumulate, "COCOeval::Accumulate");
-    m.def(
-        "COCOevalEvaluateImages",
-        &COCOeval::EvaluateImages,
+PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
+  m.def("COCOevalAccumulate", &COCOeval::Accumulate, "COCOeval::Accumulate");
+  m.def("COCOevalEvaluateImages", &COCOeval::EvaluateImages,
         "COCOeval::EvaluateImages");
-    pybind11::class_<COCOeval::InstanceAnnotation>(m, "InstanceAnnotation")
-        .def(pybind11::init<uint64_t, double, double, bool, bool>());
-    pybind11::class_<COCOeval::ImageEvaluation>(m, "ImageEvaluation")
-        .def(pybind11::init<>());
+  pybind11::class_<COCOeval::InstanceAnnotation>(m, "InstanceAnnotation")
+      .def(pybind11::init<uint64_t, double, double, bool, bool>());
+  pybind11::class_<COCOeval::ImageEvaluation>(m, "ImageEvaluation")
+      .def(pybind11::init<>());
 }

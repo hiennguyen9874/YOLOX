@@ -32,8 +32,7 @@ def get_install_requirements():
 def get_yolox_version():
     with open("yolox/__init__.py", "r") as f:
         version = re.search(
-            r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
-            f.read(), re.MULTILINE
+            r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE
         ).group(1)
     return version
 
@@ -50,6 +49,7 @@ def get_ext_modules():
         assert TORCH_AVAILABLE, "torch is required for pre-compiling ops, please install it first."
         # if any other op is added, please also add it here
         from yolox.layers import FastCOCOEvalOp
+
         ext_module.append(FastCOCOEvalOp().build_op())
     return ext_module
 
@@ -77,7 +77,8 @@ setuptools.setup(
     ext_modules=get_ext_modules(),
     cmdclass=get_cmd_class(),
     classifiers=[
-        "Programming Language :: Python :: 3", "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
+        "Operating System :: OS Independent",
         "License :: OSI Approved :: Apache Software License",
     ],
     project_urls={

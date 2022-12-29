@@ -24,7 +24,7 @@ When training on your custom dataset, you can use multiscale training in 2 ways:
 
    If so, the actual multiscale sizes range from:
 
-   [self.input_size[0] - self.multiscale_range\*32,  self.input_size[0] + self.multiscale_range\*32]
+   [self.input_size[0] - self.multiscale_range\*32, self.input_size[0] + self.multiscale_range\*32]
 
    For example, if you only set:
 

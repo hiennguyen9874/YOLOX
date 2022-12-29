@@ -24,7 +24,7 @@ This part is the same as torch's python demo, but no need to specify device.
 python3 demo.py image -n yolox-s -c yolox_s_mge.pkl --path ../../../assets/dog.jpg --conf 0.25 --nms 0.45 --tsize 640 --save_result
 ```
 
-###  [Optional]Step4: dump model for cpp inference
+### [Optional]Step4: dump model for cpp inference
 
 > **Note**: result model is dumped with `optimize_for_inference` and `enable_fuse_conv_bias_nonlinearity`.
 

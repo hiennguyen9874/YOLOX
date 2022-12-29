@@ -111,15 +111,12 @@ class Exp(BaseExp):
 
     def create_cache_dataset(self, cache_type: str = "ram"):
         from yolox.data import COCODataset, TrainTransform
+
         self.cache_dataset = COCODataset(
             data_dir=self.data_dir,
             json_file=self.train_ann,
             img_size=self.input_size,
-            preproc=TrainTransform(
-                max_labels=50,
-                flip_prob=self.flip_prob,
-                hsv_prob=self.hsv_prob
-            ),
+            preproc=TrainTransform(max_labels=50, flip_prob=self.flip_prob, hsv_prob=self.hsv_prob),
             cache=True,
             cache_type=cache_type,
         )
@@ -173,9 +170,8 @@ class Exp(BaseExp):
                     json_file=self.train_ann,
                     img_size=self.input_size,
                     preproc=TrainTransform(
-                        max_labels=50,
-                        flip_prob=self.flip_prob,
-                        hsv_prob=self.hsv_prob),
+                        max_labels=50, flip_prob=self.flip_prob, hsv_prob=self.hsv_prob
+                    ),
                     cache=False,
                     cache_type=cache_img,
                 )
@@ -187,9 +183,8 @@ class Exp(BaseExp):
             mosaic=not no_aug,
             img_size=self.input_size,
             preproc=TrainTransform(
-                max_labels=120,
-                flip_prob=self.flip_prob,
-                hsv_prob=self.hsv_prob),
+                max_labels=120, flip_prob=self.flip_prob, hsv_prob=self.hsv_prob
+            ),
             degrees=self.degrees,
             translate=self.translate,
             mosaic_scale=self.mosaic_scale,
@@ -228,7 +223,7 @@ class Exp(BaseExp):
 
         if rank == 0:
             size_factor = self.input_size[1] * 1.0 / self.input_size[0]
-            if not hasattr(self, 'random_size'):
+            if not hasattr(self, "random_size"):
                 min_size = int(self.input_size[0] / 32) - self.multiscale_range
                 max_size = int(self.input_size[0] / 32) + self.multiscale_range
                 self.random_size = (min_size, max_size)
@@ -272,9 +267,7 @@ class Exp(BaseExp):
                 elif hasattr(v, "weight") and isinstance(v.weight, nn.Parameter):
                     pg1.append(v.weight)  # apply decay
 
-            optimizer = torch.optim.SGD(
-                pg0, lr=lr, momentum=self.momentum, nesterov=True
-            )
+            optimizer = torch.optim.SGD(pg0, lr=lr, momentum=self.momentum, nesterov=True)
             optimizer.add_param_group(
                 {"params": pg1, "weight_decay": self.weight_decay}
             )  # add pg1 with weight_decay
@@ -311,9 +304,7 @@ class Exp(BaseExp):
 
         if is_distributed:
             batch_size = batch_size // dist.get_world_size()
-            sampler = torch.utils.data.distributed.DistributedSampler(
-                valdataset, shuffle=False
-            )
+            sampler = torch.utils.data.distributed.DistributedSampler(valdataset, shuffle=False)
         else:
             sampler = torch.utils.data.SequentialSampler(valdataset)
 
@@ -343,6 +334,7 @@ class Exp(BaseExp):
 
     def get_trainer(self, args):
         from yolox.core import Trainer
+
         trainer = Trainer(self, args)
         # NOTE: trainer shouldn't be an attribute of exp object
         return trainer

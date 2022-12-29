@@ -35,6 +35,7 @@ class YOLOXHead(nn.Module):
         self.n_anchors = 1
         self.num_classes = num_classes
         self.decode_in_inference = True  # for deploy, set to False
+        self.end2end_in_inference = False  # for deploy, set to False
 
         self.cls_convs = nn.ModuleList()
         self.reg_convs = nn.ModuleList()
@@ -192,6 +193,8 @@ class YOLOXHead(nn.Module):
                 origin_preds,
                 dtype=xin[0].dtype,
             )
+        elif self.end2end_in_inference:
+            return self.decode_end2end(outputs)
         else:
             self.hw = [x.shape[-2:] for x in outputs]
             # [batch, n_anchors_all, 85]
@@ -217,6 +220,7 @@ class YOLOXHead(nn.Module):
             batch_size, self.n_anchors * hsize * wsize, -1
         )
         grid = grid.view(1, -1, 2)
+
         output[..., :2] = (output[..., :2] + grid) * stride
         output[..., 2:4] = torch.exp(output[..., 2:4]) * stride
         return output, grid
@@ -224,6 +228,7 @@ class YOLOXHead(nn.Module):
     def decode_outputs(self, outputs, dtype):
         grids = []
         strides = []
+
         for (hsize, wsize), stride in zip(self.hw, self.strides):
             yv, xv = meshgrid([torch.arange(hsize), torch.arange(wsize)])
             grid = torch.stack((xv, yv), 2).view(1, -1, 2)
@@ -234,15 +239,56 @@ class YOLOXHead(nn.Module):
         grids = torch.cat(grids, dim=1).type(dtype)
         strides = torch.cat(strides, dim=1).type(dtype)
 
-        outputs = torch.cat(
-            [
-                (outputs[..., 0:2] + grids) * strides,
-                torch.exp(outputs[..., 2:4]) * strides,
-                outputs[..., 4:],
-            ],
-            dim=-1,
-        )
+        if torch.onnx.is_in_onnx_export():
+            outputs = torch.cat(
+                (
+                    (outputs[..., :2] + grids) * strides,
+                    torch.exp(outputs[..., 2:4]) * strides,
+                    outputs[..., 4:],
+                ),
+                dim=2,
+            )
+        else:
+            outputs[..., :2] = (outputs[..., :2] + grids) * strides
+            outputs[..., 2:4] = torch.exp(outputs[..., 2:4]) * strides
         return outputs
+
+    def decode_end2end(self, outputs):
+        ret_outputs = []
+        for idx, output in enumerate(outputs):
+            batch_size, _, ny, nx = output.shape
+
+            output = (
+                output.view(batch_size, self.n_anchors, self.num_classes + 5, ny, nx)
+                .permute(0, 1, 3, 4, 2)
+                .contiguous()
+                .view(
+                    batch_size,
+                    self.n_anchors * ny * nx,
+                    self.num_classes + 5,
+                )
+            )
+            grid = self._make_grid(nx, ny, output.device)
+            stride = self.strides[idx]
+            output = torch.cat(
+                (
+                    (output[..., :2] + grid) * stride,
+                    torch.exp(output[..., 2:4]) * stride,
+                    output[..., 4:],
+                ),
+                dim=2,
+            )
+
+            ret_outputs.append(output)
+        return torch.cat(ret_outputs, dim=1)
+
+    @staticmethod
+    def _make_grid(nx=20, ny=20, device=torch.device("cpu")):
+        yv, xv = torch.meshgrid(
+            [torch.arange(ny, device=device), torch.arange(nx, device=device)],
+            indexing="ij",
+        )
+        return torch.stack((xv, yv), 2).view(1, -1, 2)
 
     def get_losses(
         self,
